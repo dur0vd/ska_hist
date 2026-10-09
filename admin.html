@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Управление сайтом — Отечественная история</title>
+<meta name="theme-color" content="#7a1f2b">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">И</span><span class="brand-t"><strong>Отечественная история</strong><small>Управление сайтом</small></span></a>
+    <nav class="nav simple"><ul><li><a href="index.html">← На сайт</a></li><li><a href="instrukciya.html">Инструкция</a></li></ul></nav>
+  </div>
+</header>
+
+<main id="main">
+<div class="page-head"><div class="wrap"><h1>Управление сайтом</h1></div></div>
+<div class="wrap content adm">
+
+  <!-- вход -->
+  <section id="login" class="card">
+    <h2>Вход</h2>
+    <p>Вставьте ключ доступа, который вам дали. Он запоминается только в этом браузере, и вводить его каждый раз не придётся.</p>
+    <form id="login-form">
+      <label for="token">Ключ доступа</label>
+      <input id="token" type="password" autocomplete="off" placeholder="github_pat_…" required>
+      <button class="btn" type="submit">Войти</button>
+    </form>
+    <p class="hint">Нет ключа или не получается войти? Откройте <a href="instrukciya.html">инструкцию</a>.</p>
+  </section>
+
+  <!-- рабочая область -->
+  <div id="app" hidden>
+    <p class="who"><span id="who"></span> <button id="logout" class="link" type="button">Выйти</button></p>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="news">Объявления</button>
+      <button role="tab" aria-selected="false" data-tab="lec">Лекции</button>
+    </div>
+
+    <!-- Объявления -->
+    <section id="tab-news" class="tabpane">
+      <div class="card">
+        <h2>Новое объявление</h2>
+        <form id="news-form">
+          <div class="row">
+            <div><label for="n-date">Дата</label><input id="n-date" type="date" required></div>
+          </div>
+          <label for="n-text">Текст объявления</label>
+          <textarea id="n-text" rows="3" required placeholder="Например: Размещены результаты проверки мини-эссе № 3"></textarea>
+          <label for="n-file">Прикрепить файл <span class="opt">(необязательно)</span></label>
+          <input id="n-file" type="file">
+          <label for="n-label">Как подписать ссылку на файл <span class="opt">(необязательно)</span></label>
+          <input id="n-label" type="text" placeholder="Например: Результаты мини-эссе № 3">
+          <button class="btn" type="submit">Опубликовать</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Опубликованные объявления</h2>
+        <ul id="news-list" class="adm-list"></ul>
+      </div>
+    </section>
+
+    <!-- Лекции -->
+    <section id="tab-lec" class="tabpane" hidden>
+      <div class="card">
+        <h2>Добавить или заменить лекцию</h2>
+        <form id="lec-form">
+          <div class="row">
+            <div>
+              <label for="l-group">Курс</label>
+              <select id="l-group">
+                <option value="lekciya-">ФГУ</option>
+                <option value="mehmat-lekciya-">Мехмат</option>
+                <option value="speckurs-lekciya-">Спецкурс</option>
+              </select>
+            </div>
+            <div>
+              <label for="l-num">Номер лекции</label>
+              <input id="l-num" type="number" min="1" max="99" required>
+            </div>
+          </div>
+          <p id="l-hint" class="hint"></p>
+          <label for="l-title">Название лекции <span class="opt">(необязательно)</span></label>
+          <input id="l-title" type="text" placeholder="Например: Древняя Русь IX – нач. XIII веков">
+          <label for="l-file">Файл презентации (.pptx или .pdf)</label>
+          <input id="l-file" type="file" accept=".pptx,.ppt,.pdf" required>
+          <button class="btn" type="submit">Загрузить лекцию</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Загруженные лекции</h2>
+        <div id="lec-list"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="status" class="status" role="status" aria-live="polite" hidden></div>
+</div>
+</main>
+
+<footer class="foot"><div class="wrap foot-in"><p>Изменения появляются на сайте через 1–2 минуты.</p></div></footer>
+<script src="assets/admin.js"></script>
+</body>
+</html>

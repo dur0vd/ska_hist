@@ -36,3 +36,27 @@ npm run serve   # посмотреть на http://localhost:8080
 ## Публикация
 
 Сайт отдаётся через GitHub Pages из ветки `main`, корень репозитория.
+
+## Как преподаватель добавляет материалы сам
+
+Преподавателю не нужен ни GitHub, ни установка программ. На сайте есть страница `admin.html` (в меню не показывается) с формами «добавить лекцию» и «добавить объявление» и страница `instrukciya.html` с инструкцией для него. Ему нужен только **ключ доступа**, который выдаёте вы.
+
+Как это работает: страница через GitHub API кладёт файл в `files/` или правит `data/announcements.json` / `data/lectures.json`. После этого workflow `.github/workflows/build.yml` пересобирает страницы, и Pages публикует их за 1–2 минуты.
+
+### Выдать ключ (владелец репозитория, один раз в год)
+
+1. GitHub → аватар → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
+2. **Token name:** `ska-site-prepod`. **Expiration:** 1 год (максимум). **Resource owner:** `dur0vd`.
+3. **Repository access** → *Only select repositories* → `ska_hist`.
+4. **Permissions** → *Repository permissions* → **Contents: Read and write**. Больше ничего не включать.
+5. **Generate token**, скопировать строку `github_pat_…` (показывается один раз) и отправить преподавателю личным сообщением.
+
+Отозвать доступ: там же, на странице токенов, кнопка **Delete**. Когда ключ истечёт, выдайте новый.
+
+> Ключ позволяет менять только файлы этого репозитория. Не публикуйте его в чатах и на сайте.
+
+### Лимиты
+
+- Файл не больше 50 МБ (ограничение GitHub API).
+- Лекции именуются автоматически: `lekciya-N.pptx` (ФГУ), `mehmat-lekciya-N.pptx`, `speckurs-lekciya-N.pptx`.
+- Тексты остальных страниц (программа, вопросы, темы курсовых) через `admin.html` не правятся, только в `data/pages.json`.

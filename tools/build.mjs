@@ -153,51 +153,55 @@ function renderGeneric(blocks) {
   return html;
 }
 
+// data ---------------------------------------------------------------------
+const readJson = (f, def) => { try { return JSON.parse(fs.readFileSync(ROOT + '/data/' + f, 'utf8')); } catch { return def; } };
+const announcements = readJson('announcements.json', []);
+const lectureTitles = readJson('lectures.json', {});
+const dateKey = (d) => d.split('.').reverse().join('');
+const sortedNews = () => [...announcements].sort((x, y) => dateKey(y.date).localeCompare(dateKey(x.date)));
+
 // lectures -----------------------------------------------------------------
-function lectureGrid(prefix, from, to, label, extra) {
+// Файлы лекций кладутся в files/ с именами: lekciya-N.pptx (ФГУ), mehmat-lekciya-N.pptx, speckurs-lekciya-N.pptx
+function listLectures(prefix) {
+  const re = new RegExp('^' + prefix + '(\\d+)\\.(pptx|ppt|pdf)$');
+  const out = [];
+  for (const f of fs.readdirSync(OUT + '/files')) {
+    const m = f.match(re);
+    if (m) out.push({ n: +m[1], rel: 'files/' + f, key: prefix + m[1] });
+  }
+  return out.sort((x, y) => x.n - y.n);
+}
+
+function lectureGrid(prefix) {
   let h = '<div class="lec-grid">';
-  for (let n = from; n <= to; n++) {
-    const rel = `files/${prefix}${n}.pptx`;
-    if (!exists(rel)) continue;
-    h += `<a class="lec" href="${rel}" download><span class="lec-n">${n}</span><span class="lec-t">${label} ${n}${extra ? `<em>${extra(n) || ''}</em>` : ''}</span><span class="lec-s">PPTX · ${sizeOf(rel)}</span></a>`;
+  for (const { n, rel, key } of listLectures(prefix)) {
+    const title = lectureTitles[key];
+    h += `<a class="lec" href="${rel}" download><span class="lec-n">${n}</span><span class="lec-t">Лекция ${n}${title ? `<em>${esc(title)}</em>` : ''}</span><span class="lec-s">${fileExt(rel)} · ${sizeOf(rel)}</span></a>`;
   }
   return h + '</div>';
 }
 
+const lectureCount = () => listLectures('lekciya-').length + listLectures('mehmat-lekciya-').length;
+
 function renderLectures() {
   return `
-<p class="lead">Презентации лекций по истории России. Файлы в формате PowerPoint (.pptx) скачиваются прямо с этого сайта.</p>
+<p class="lead">Презентации лекций по истории России. Файлы скачиваются прямо с этого сайта.</p>
 <h2>ФГУ: IX–XIX века</h2>
-${lectureGrid('lekciya-', 1, 21, 'Лекция')}
+${lectureGrid('lekciya-')}
 <h2>Мехмат</h2>
-${lectureGrid('mehmat-lekciya-', 1, 8, 'Лекция')}`;
+${lectureGrid('mehmat-lekciya-')}`;
 }
 
-function renderSpeckursLectures(blocks) {
-  // pair each file with label by lecture number in the label text
-  const labels = {};
-  const links = {};
-  for (const b of blocks) {
-    if (b.k === 'rt') { const t = plain(b.h); const m = t.match(/Лекция\s*(\d+)\.?\s*(.*)/); if (m) labels[m[1]] = m[2].trim(); }
-    if (b.k === 'link' && assets[b.href]) { const m = assets[b.href].match(/speckurs-lekciya-(\d+)/); if (m) links[m[1]] = assets[b.href]; }
-  }
+function renderSpeckursLectures() {
   let h = '<p class="lead">Спецкурс «От Просвещения к постмодерну: революция и реакция в русской истории».</p><div class="files wide">';
-  for (const n of Object.keys(links).sort((a, b) => a - b)) h += fileCard(links[n], `Лекция ${n}. ${labels[n] || ''}`.trim(), 'Презентация PPTX');
+  for (const { n, rel, key } of listLectures('speckurs-lekciya-')) h += fileCard(rel, `Лекция ${n}. ${lectureTitles[key] || ''}`.trim(), 'Презентация ' + fileExt(rel));
   return h + '</div>';
 }
 
 // announcements -----------------------------------------------------------
-function renderAnnouncements(blocks) {
-  let h = '<ul class="news">';
-  for (const b of blocks) {
-    if (b.k !== 'rt') continue;
-    const c = cleanRich(b.h);
-    const m = plain(b.h).match(/^(\d{2}\.\d{2}\.\d{4})\.?\s*/);
-    const date = m ? m[1] : '';
-    const body = c.replace(/<\/?p>/g, '').replace(/^\s*\d{2}\.\d{2}\.\d{4}\.?\s*/, '');
-    h += `<li><time>${date}</time><span>${body}</span></li>`;
-  }
-  return h + '</ul>';
+const newsItems = (list) => list.map((n) => `<li><time>${n.date}</time><span>${n.html}</span></li>`).join('');
+function renderAnnouncements() {
+  return `<ul class="news">${newsItems(sortedNews())}</ul>`;
 }
 
 // ---- layout -------------------------------------------------------------------
@@ -266,8 +270,8 @@ function pageBody(p) {
   const pg = pages[p];
   if (!pg) return '';
   if (p === '/lekcii') return renderLectures();
-  if (p === '/презентации-лекций') return renderSpeckursLectures(pg.blocks);
-  if (p === '/obyavleniya') return renderAnnouncements(pg.blocks);
+  if (p === '/презентации-лекций') return renderSpeckursLectures();
+  if (p === '/obyavleniya') return renderAnnouncements();
   return renderGeneric(pg.blocks);
 }
 const bodies = {};
@@ -306,10 +310,7 @@ for (const [idx, it] of flat.entries()) {
 // home
 {
   const intro = pages['/'].blocks.find((b) => b.k === 'rt');
-  const news = pages['/obyavleniya'].blocks.filter((b) => b.k === 'rt').slice(0, 3).map((b) => {
-    const m = plain(b.h).match(/^(\d{2}\.\d{2}\.\d{4})/);
-    return `<li><time>${m ? m[1] : ''}</time><span>${cleanRich(b.h).replace(/<\/?p>/g, '').replace(/^\s*\d{2}\.\d{2}\.\d{4}\.?\s*/, '')}</span></li>`;
-  }).join('');
+  const news = newsItems(sortedNews().slice(0, 3));
   const tile = (href, t, d, n) => `<a class="tile" href="${href}"><span class="tile-n">${n}</span><strong>${t}</strong><small>${d}</small></a>`;
   const body = `
 <section class="hero">
@@ -319,7 +320,7 @@ for (const [idx, it] of flat.entries()) {
   <div class="hero-cta"><a class="btn" href="lekcii.html">Презентации лекций</a><a class="btn ghost" href="programma.html">Программа курса</a></div>
 </section>
 <section class="tiles" aria-label="Разделы">
-  ${tile('lekcii.html', 'Лекции', '29 презентаций для ФГУ и мехмата', '01')}
+  ${tile('lekcii.html', 'Лекции', `${lectureCount()} презентаций для ФГУ и мехмата`, '01')}
   ${tile('metodicheskie-materialy.html', 'Методические материалы', 'Учебник, кейсы, диспуты', '02')}
   ${tile('fgu-rejtingovaya-sistema.html', 'ФГУ', 'Рейтинг, задания, результаты', '03')}
   ${tile('mehmat-temy-seminarov.html', 'Мехмат', 'Семинары, эссе, экзамен', '04')}
