@@ -1,0 +1,12 @@
+{
+  "name": "ska-hist",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "serve": "node tools/serve.mjs"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  }
+}
