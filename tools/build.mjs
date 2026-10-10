@@ -6,6 +6,9 @@ import * as cheerio from 'cheerio';
 import { sanitizePage } from './page-content.mjs';
 
 const OUT = ROOT;
+// Версия браузерной очистки из lockfile, без стороннего CDN.
+fs.mkdirSync(path.join(ROOT, 'assets/vendor'), { recursive: true });
+fs.copyFileSync(path.join(ROOT, 'node_modules/dompurify/dist/purify.es.mjs'), path.join(ROOT, 'assets/vendor/purify.es.mjs'));
 const pages = JSON.parse(fs.readFileSync(ROOT + '/data/pages.json', 'utf8'));
 const assets = JSON.parse(fs.readFileSync(ROOT + '/data/assetmap.json', 'utf8'));
 const WIX = 'https://solovyevka.wixsite.com/ska-ruhistory';
@@ -119,7 +122,7 @@ function cleanRich(html) {
     });
   };
   walk(root);
-  return root.html().replace(/\u200b/g, '').replace(/&nbsp;/g, ' ').replace(/\n\s*\n/g, '\n').trim();
+  return sanitizePage(root.html().replace(/\u200b/g, '').replace(/&nbsp;/g, ' ').replace(/\n\s*\n/g, '\n').trim());
 }
 
 const fileExt = (rel) => rel.split('.').pop().toUpperCase();
@@ -200,7 +203,7 @@ function renderSpeckursLectures() {
 }
 
 // announcements -----------------------------------------------------------
-const newsItems = (list) => list.map((n) => `<li><time>${n.date}</time><span>${n.html}</span></li>`).join('');
+const newsItems = (list) => list.map((n) => `<li><time>${esc(String(n.date || ''))}</time><span>${sanitizePage(n.html)}</span></li>`).join('');
 function renderAnnouncements() {
   return `<ul class="news">${newsItems(sortedNews())}</ul>`;
 }
@@ -230,6 +233,8 @@ function layout({ slug, title, body, crumb, desc, pager }) {
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(t)}</title>
 <meta name="description" content="${esc(desc || 'Сайт для студентов МГУ имени М. В. Ломоносова, изучающих отечественную историю: лекции, семинары, задания, результаты.')}">

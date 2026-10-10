@@ -1,7 +1,18 @@
 import PageContent from './page-content.js';
+import { safeAttachmentName } from './content-policy.js';
 
 (function () {
   'use strict';
+
+  // Не показываем редактор внутри чужой страницы: защита от подставного интерфейса.
+  if (window.top !== window.self) {
+    var notice = document.createElement('p');
+    notice.textContent = 'Откройте управление сайтом в отдельной вкладке.';
+    var link = document.createElement('a');
+    link.href = window.location.href; link.target = '_blank'; link.rel = 'noopener'; link.textContent = 'Открыть редактор';
+    document.body.replaceChildren(notice, link);
+    return;
+  }
 
   var OWNER = 'dur0vd', REPO = 'ska_hist', BRANCH = 'main';
   var API = 'https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/';
@@ -10,14 +21,15 @@ import PageContent from './page-content.js';
 
   var $ = function (id) { return document.getElementById(id); };
   var token = '';
-  try { token = localStorage.getItem(KEY) || ''; } catch (e) {}
+  // Удаляем старый постоянный ключ. Новый хранится только в памяти этой вкладки.
+  try { localStorage.removeItem(KEY); sessionStorage.removeItem(KEY); } catch (e) {}
 
   // ---------- вспомогательное ----------
   function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
   function stripTags(html) {
-    var d = document.createElement('div'); d.innerHTML = html; return d.textContent || '';
+    return PageContent.text(html);
   }
   function status(kind, text) {
     var s = $('status');
@@ -129,7 +141,7 @@ import PageContent from './page-content.js';
     busy(form, true);
     status('busy', 'Проверяю ключ…');
     checkToken().then(function () {
-      try { localStorage.setItem(KEY, token); } catch (err) {}
+      $('token').value = '';
       $('status').hidden = true;
       showApp();
     }).catch(function (err) {
@@ -200,13 +212,14 @@ import PageContent from './page-content.js';
     var form = e.target;
     var text = $('n-text').value.replace(/\s+/g, ' ').trim();
     var file = $('n-file').files[0];
+    if (file && !safeAttachmentName(file.name)) { status('err', 'Этот тип файла нельзя публиковать. Выберите PDF, Word, Excel, презентацию, картинку или ZIP.'); return; }
     if (file && file.size > MAX_MB * 1048576) { status('err', 'Файл слишком большой (больше ' + MAX_MB + ' МБ).'); return; }
     busy(form, true);
     status('busy', file ? 'Загружаю файл и публикую…' : 'Публикую…');
 
     var link = Promise.resolve('');
     if (file) {
-      var name = safeName(file.name);
+      var name = Date.now() + '-' + safeName(file.name);
       var path = 'files/materials/' + name;
       link = fileToBase64(file).then(function (b64) {
         return getFile(path).then(function (ex) {
@@ -488,7 +501,7 @@ import PageContent from './page-content.js';
     var file = $('p-file').files[0];
     if (!file) { status('err', 'Выберите документ или картинку.'); return; }
     var ext = file.name.split('.').pop().toLowerCase();
-    if (!['pdf','doc','docx','xls','xlsx','csv','txt','ppt','pptx','png','jpg','jpeg','webp','gif','zip'].includes(ext)) {
+    if (!safeAttachmentName(file.name)) {
       status('err', 'Нужен документ, таблица, презентация или картинка PNG/JPG/WebP/GIF.'); return;
     }
     if (file.size > MAX_MB * 1048576) { status('err', 'Файл больше 50 МБ.'); return; }

@@ -1,28 +1,23 @@
-import * as cheerio from 'cheerio';
-import content from '../assets/page-content.js';
+import sanitizeHtml from 'sanitize-html';
+import { allowed, remove, safeUrl } from '../assets/content-policy.js';
 
 // Правила совпадают с редактором; проверяются и при сборке, а не только в браузере.
 export function sanitizePage(html) {
-  const $ = cheerio.load(`<div id="page-content-root">${html}</div>`, null, false);
-  const root = $('#page-content-root');
-  root.find('*').each((_, el) => {
-    const tag = el.tagName.toLowerCase();
-    const node = $(el);
-    if (content.remove.includes(tag)) { node.remove(); return; }
-    if (!content.allowed.includes(tag)) { node.replaceWith(node.contents()); return; }
-    const attrs = {};
-    if (tag === 'a' && content.safeUrl(node.attr('href'), false)) attrs.href = node.attr('href');
-    if (tag === 'img' && content.safeUrl(node.attr('src'), true)) {
-      attrs.src = node.attr('src'); attrs.alt = node.attr('alt') || '';
-    }
-    if (tag === 'td' || tag === 'th') for (const k of ['rowspan', 'colspan']) {
-      const n = Number(node.attr(k)); if (n >= 1 && n <= 30) attrs[k] = String(n);
-    }
-    if (tag === 'ol' && /^\d{1,4}$/.test(node.attr('start') || '')) attrs.start = node.attr('start');
-    for (const k of Object.keys(el.attribs || {})) node.removeAttr(k);
-    node.attr(attrs);
-    if (tag === 'img' && !attrs.src) node.remove();
-    if (tag === 'a' && !attrs.href) node.replaceWith(node.contents());
+  return sanitizeHtml(String(html || ''), {
+    allowedTags: allowed,
+    nonTextTags: remove,
+    allowedAttributes: { a: ['href'], img: ['src','alt'], td: ['rowspan','colspan'], th: ['rowspan','colspan'], ol: ['start'] },
+    allowedSchemes: ['http','https','mailto','tel'],
+    allowProtocolRelative: false,
+    transformTags: {
+      '*': (tagName, attribs) => {
+        if ('href' in attribs && !safeUrl(attribs.href, false)) delete attribs.href;
+        if ('src' in attribs && !safeUrl(attribs.src, true)) delete attribs.src;
+        for (const key of ['rowspan','colspan']) if (key in attribs && !/^(?:[1-9]|[12][0-9]|30)$/.test(attribs[key])) delete attribs[key];
+        if ('start' in attribs && !/^\d{1,4}$/.test(attribs.start)) delete attribs.start;
+        return { tagName, attribs };
+      }
+    },
+    exclusiveFilter: frame => frame.tag === 'img' && !frame.attribs.src
   });
-  return root.html();
 }

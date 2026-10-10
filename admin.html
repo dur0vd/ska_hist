@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://api.github.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Управление сайтом — Отечественная история</title>
 <meta name="theme-color" content="#7a1f2b">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -25,10 +27,10 @@
   <!-- вход -->
   <section id="login" class="card">
     <h2>Вход</h2>
-    <p>Вставьте ключ доступа, который вам дали. Он запоминается только в этом браузере, и вводить его каждый раз не придётся.</p>
+    <p>Вставьте ключ доступа, который вам дали. Он действует только в этой открытой вкладке. После обновления страницы или закрытия вкладки ключ нужно ввести заново.</p>
     <form id="login-form">
       <label for="token">Ключ доступа</label>
-      <input id="token" type="password" autocomplete="off" placeholder="github_pat_…" required>
+      <input id="token" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="github_pat_…" required>
       <button class="btn" type="submit">Войти</button>
     </form>
     <p class="hint">Нет ключа или не получается войти? Откройте <a href="instrukciya.html">инструкцию</a>.</p>
@@ -55,7 +57,7 @@
           <label for="n-text">Текст объявления</label>
           <textarea id="n-text" rows="3" required placeholder="Например: Размещены результаты проверки мини-эссе № 3"></textarea>
           <label for="n-file">Прикрепить файл <span class="opt">(необязательно)</span></label>
-          <input id="n-file" type="file">
+          <input id="n-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx,.png,.jpg,.jpeg,.webp,.gif,.zip">
           <label for="n-label">Как подписать ссылку на файл <span class="opt">(необязательно)</span></label>
           <input id="n-label" type="text" placeholder="Например: Результаты мини-эссе № 3">
           <button class="btn" type="submit">Опубликовать</button>

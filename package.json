@@ -4,9 +4,12 @@
   "type": "module",
   "scripts": {
     "build": "node tools/build.mjs",
-    "serve": "node tools/serve.mjs"
+    "serve": "node tools/serve.mjs",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0",
+    "dompurify": "^3.4.16",
+    "sanitize-html": "^2.18.0"
   }
 }
