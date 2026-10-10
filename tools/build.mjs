@@ -261,7 +261,7 @@ ${pager || ''}
 <footer class="foot">
   <div class="wrap foot-in">
     <p>Сайт предназначен для студентов МГУ имени М. В. Ломоносова.<br>© ${AUTHOR}</p>
-    <p><a href="kontakty.html">Связаться</a></p>
+    <p><a href="kontakty.html">Связаться</a><br>Вопросы по работе сайта: <a href="https://t.me/qddwxd" target="_blank" rel="noopener">@qddwxd</a></p>
   </div>
 </footer>
 <script src="assets/app.js"></script>
@@ -306,8 +306,6 @@ for (const [idx, it] of flat.entries()) {
 // contacts
 {
   const pg = pages['/contact-me'];
-  const txt = pg.blocks.filter((b) => b.k === 'rt').map((b) => plain(b.h)).join(' | ');
-  console.log('CONTACT RAW:', txt);
   const body = `<div class="card contact">
   <img class="portrait" src="img/portrait.jpg" alt="Соловьёв К. А." width="220" height="198">
   <div><h2>Соловьёв Константин Анатольевич</h2>
@@ -315,6 +313,10 @@ for (const [idx, it] of flat.entries()) {
     <dt>Электронная почта</dt><dd><a href="mailto:solovyevka@gmail.com">solovyevka@gmail.com</a></dd>
     <dt>Телефон</dt><dd><a href="tel:+79166082789">+7 (916) 608-27-89</a></dd>
   </dl></div>
+</div>
+<div class="card contact tech">
+  <div><h2>Вопросы по работе сайта</h2>
+  <p>Не открывается страница, не скачивается файл, что-то отображается неправильно? Напишите в Telegram: <a href="https://t.me/qddwxd" target="_blank" rel="noopener">@qddwxd</a>.</p></div>
 </div>`;
   fs.writeFileSync(`${OUT}/kontakty.html`, layout({ slug: 'kontakty', title: 'Контакты', body, crumb: '<a href="index.html">Главная</a>' }));
 }

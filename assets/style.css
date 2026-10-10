@@ -201,3 +201,6 @@ a:hover { text-decoration-thickness: 2px; }
 /* invisible bridge so the dropdown doesn't close while the cursor crosses the gap */
 .nav .dd > ul::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
 @media (min-width: 1101px) { .nav .dd > ul { transition: none; } .nav .dd > button { padding-block: 14px; } }
+
+.contact.tech { margin-top: 20px; }
+.foot a { color: inherit; }
