@@ -189,6 +189,11 @@ a:hover { text-decoration-thickness: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 
 .shot img { max-height: 75vh; width: auto; }
+.edited-page { overflow-x: auto; overflow-wrap: anywhere; }
+.edited-page img { max-width: 100%; height: auto; max-height: 75vh; }
+.edited-page table, .page-editor table { border-collapse: collapse; width: 100%; margin: 18px 0; }
+.edited-page th, .edited-page td, .page-editor th, .page-editor td { border: 1px solid var(--line); padding: 10px 12px; min-width: 80px; vertical-align: top; }
+.edited-page th, .page-editor th { background: var(--accent-soft); text-align: left; }
 .contact { display: flex; gap: 28px; align-items: center; max-width: 720px; }
 .contact .portrait { width: 200px; height: auto; border-radius: 14px; flex: none; }
 @media (max-width: 560px) { .contact { flex-direction: column; align-items: flex-start; } }

@@ -41,6 +41,7 @@
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" data-tab="news">Объявления</button>
       <button role="tab" aria-selected="false" data-tab="lec">Лекции</button>
+      <button role="tab" aria-selected="false" data-tab="pages">Страницы</button>
     </div>
 
     <!-- Объявления -->
@@ -98,13 +99,78 @@
         <div id="lec-list"></div>
       </div>
     </section>
+
+    <section id="tab-pages" class="tabpane" hidden>
+      <div class="card">
+        <h2>Группа 107 и курсовые работы</h2>
+        <p>Выберите страницу и отредактируйте её прямо здесь. Можно вставить текст или таблицу из Word и Excel.</p>
+        <label for="p-page">Страница</label>
+        <select id="p-page">
+          <optgroup label="ФГУ · группа 107">
+            <option value="fgu-gruppa-107">Группа 107 · таблица занятий</option>
+            <option value="fgu-zadaniya">Задания</option>
+            <option value="fgu-rezultaty">Результаты проверки работ</option>
+            <option value="fgu-itogi-semestra">Итоги семестра</option>
+            <option value="fgu-seminary-1">Семинары первого семестра</option>
+            <option value="fgu-seminary-2">Семинары второго семестра</option>
+            <option value="fgu-rejtingovaya-sistema">Рейтинговая система</option>
+            <option value="fgu-voprosy-k-ekzamenu">Вопросы к экзамену и зачёту</option>
+            <option value="fgu-raboty-studentov">Работы студентов</option>
+          </optgroup>
+          <optgroup label="Курсовые работы">
+            <option value="kursovye-temy">Список тем</option>
+            <option value="kursovye-metodika">Методика подготовки</option>
+            <option value="kursovye-raspredelenie">Распределение тем</option>
+            <option value="kursovye-indeks">Индекс</option>
+          </optgroup>
+        </select>
+        <p><a id="p-public" href="fgu-gruppa-107.html" target="_blank" rel="noopener">Открыть опубликованную страницу ↗</a></p>
+        <form id="page-form">
+          <div id="p-toolbar" class="editor-toolbar" role="toolbar" aria-label="Оформление текста">
+            <button type="button" data-command="bold"><strong>Жирный</strong></button>
+            <button type="button" data-command="italic"><em>Курсив</em></button>
+            <button type="button" data-block="p">Абзац</button>
+            <button type="button" data-block="h2">Заголовок</button>
+            <button type="button" data-command="insertOrderedList">1. Список</button>
+            <button type="button" data-command="insertUnorderedList">• Список</button>
+            <button type="button" id="p-link">Ссылка</button>
+            <button type="button" id="p-table">Таблица</button>
+            <button type="button" id="p-row">+ Строка</button>
+            <button type="button" id="p-delete-row">Удалить строку</button>
+            <button type="button" id="p-remove-image">Удалить картинку</button>
+            <button type="button" data-command="undo">Отменить</button>
+          </div>
+          <label id="p-editor-label" for="p-editor">Содержание страницы</label>
+          <div id="p-editor" class="page-editor prose" contenteditable="false" role="textbox" aria-multiline="true" aria-labelledby="p-editor-label" spellcheck="true"></div>
+          <p id="p-state" class="hint" aria-live="polite">Выберите страницу для редактирования.</p>
+          <details class="page-upload">
+            <summary>Прикрепить документ или картинку</summary>
+            <label for="p-file">Файл до 50 МБ</label>
+            <input id="p-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx,.png,.jpg,.jpeg,.webp,.gif,.zip">
+            <label for="p-file-label">Подпись к файлу или картинке</label>
+            <input id="p-file-label" type="text" placeholder="Например: Задания на октябрь">
+            <button id="p-upload" class="del" type="button">Добавить в страницу</button>
+            <p class="hint">После добавления файла нажмите «Сохранить страницу».</p>
+          </details>
+          <div class="editor-actions">
+            <button id="p-save" class="btn" type="submit" disabled>Сохранить страницу</button>
+            <button id="p-preview-button" class="del" type="button">Предпросмотр</button>
+            <button id="p-reload" class="link" type="button">Загрузить заново</button>
+          </div>
+        </form>
+      </div>
+      <section id="p-preview" class="card" hidden>
+        <h2>Предпросмотр</h2>
+        <div id="p-preview-content" class="prose edited-page"></div>
+      </section>
+    </section>
   </div>
 
   <div id="status" class="status" role="status" aria-live="polite" hidden></div>
 </div>
 </main>
 
-<footer class="foot"><div class="wrap foot-in"><p>Изменения появляются на сайте через 1–2 минуты.</p></div></footer>
-<script src="assets/admin.js"></script>
+<footer class="foot"><div class="wrap foot-in"><p>Публикация изменений обычно занимает 1–5 минут.</p></div></footer>
+<script type="module" src="assets/admin.js"></script>
 </body>
 </html>

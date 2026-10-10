@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 import * as cheerio from 'cheerio';
+import { sanitizePage } from './page-content.mjs';
 
 const OUT = ROOT;
 const pages = JSON.parse(fs.readFileSync(ROOT + '/data/pages.json', 'utf8'));
@@ -267,6 +268,12 @@ ${pager || ''}
 const built = new Set();
 const results = [];
 function pageBody(p) {
+  const editable = ROOT + '/data/editable/' + pathToSlug[p] + '.json';
+  if (exists('data/editable/' + pathToSlug[p] + '.json')) {
+    const data = JSON.parse(fs.readFileSync(editable, 'utf8'));
+    const content = sanitizePage(data.html);
+    return '<div class="prose edited-page">' + (content.trim() || '<p>Материалы ещё не размещены.</p>') + '</div>';
+  }
   const pg = pages[p];
   if (!pg) return '';
   if (p === '/lekcii') return renderLectures();

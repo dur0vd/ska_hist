@@ -16,6 +16,7 @@
 .adm .link { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font: inherit; }
 
 .tabs { display: flex; gap: 6px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.tabs { flex-wrap: wrap; }
 .tabs button { font: 600 16px/1 var(--sans); padding: 12px 18px; border: 0; background: none; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; }
 .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
 
@@ -45,3 +46,21 @@
 .top .nav.simple > ul { flex-direction: row; gap: 2px; }
 .top .nav.simple a { width: auto; padding: 10px 12px; }
 @media (max-width: 480px) { .top .nav.simple a { padding: 8px; font-size: 14px; } .brand-t small { display: none; } }
+@media (max-width: 560px) {
+  .top:has(.nav.simple) .top-in { flex-wrap: wrap; gap: 6px; }
+  .top .nav.simple { margin-left: 0; width: 100%; }
+}
+
+.editor-toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+.editor-toolbar button { font: inherit; font-size: 14px; cursor: pointer; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: var(--bg); }
+.editor-toolbar button:hover { border-color: var(--accent); }
+.page-editor { min-height: 280px; max-height: 65vh; overflow: auto; border: 1.5px solid var(--line); border-radius: 10px; padding: 18px; background: var(--bg); overflow-wrap: anywhere; }
+.page-editor:focus { outline: 3px solid var(--gold); outline-offset: 1px; }
+.page-editor img { max-width: 100%; max-height: 350px; height: auto; }
+.page-editor img.selected { outline: 3px solid var(--accent); }
+.page-upload { margin: 18px 0; }
+.page-upload summary { cursor: pointer; font-weight: 600; }
+.page-upload button { margin-top: 12px; }
+.editor-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 20px; }
+.adm .editor-actions .btn { margin-top: 0; }
+.edited-page img { max-width: 100%; height: auto; max-height: 75vh; }

@@ -1,3 +1,5 @@
+import PageContent from './page-content.js';
+
 (function () {
   'use strict';
 
@@ -151,8 +153,10 @@
       Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (x) {
         x.setAttribute('aria-selected', String(x === b));
       });
-      $('tab-news').hidden = b.dataset.tab !== 'news';
-      $('tab-lec').hidden = b.dataset.tab !== 'lec';
+      Array.prototype.forEach.call(document.querySelectorAll('.tabpane'), function (pane) {
+        pane.hidden = pane.id !== 'tab-' + b.dataset.tab;
+      });
+      if (b.dataset.tab === 'pages' && !pageLoaded) loadPage();
     });
   });
 
@@ -326,6 +330,202 @@
       loadLectures();
     }).catch(function (err) { status('err', err.message); })
       .then(function () { busy(form, false); });
+  });
+
+  // ---------- страницы ----------
+  var pageLoaded = false, pageSlug = '', pageSha = null, pageDirty = false;
+  var pageWorking = false, pageRange = null, selectedImage = null;
+  var editor = $('p-editor');
+
+  function markPageDirty() {
+    pageDirty = true;
+    $('p-state').textContent = 'Есть несохранённые изменения.';
+    $('p-preview').hidden = true;
+  }
+  function pageBusy(on) {
+    pageWorking = on;
+    $('p-page').disabled = on;
+    $('p-save').disabled = on || !pageLoaded;
+    ['p-upload', 'p-reload', 'p-preview-button'].forEach(function (id) { $(id).disabled = on || !pageLoaded; });
+    editor.contentEditable = String(!on && pageLoaded);
+  }
+  function pagePath() { return 'data/editable/' + pageSlug + '.json'; }
+  function rememberSelection() {
+    var sel = window.getSelection();
+    if (sel.rangeCount && editor.contains(sel.anchorNode) && editor.contains(sel.focusNode)) pageRange = sel.getRangeAt(0).cloneRange();
+  }
+  function restoreSelection() {
+    editor.focus();
+    var sel = window.getSelection();
+    if (!pageRange || !editor.contains(pageRange.startContainer)) {
+      pageRange = document.createRange(); pageRange.selectNodeContents(editor); pageRange.collapse(false);
+    }
+    sel.removeAllRanges(); sel.addRange(pageRange);
+  }
+  function insertPageHtml(html) {
+    restoreSelection();
+    document.execCommand('insertHTML', false, PageContent.sanitize(html, document));
+    rememberSelection(); markPageDirty();
+  }
+  function loadPage() {
+    pageSlug = $('p-page').value;
+    pageLoaded = false; pageBusy(true);
+    $('p-state').textContent = 'Загружаю страницу…';
+    $('p-public').href = pageSlug + '.html';
+    readJson(pagePath(), { html: '' }).then(function (r) {
+      editor.innerHTML = PageContent.sanitize(r.data.html || '', document);
+      pageSha = r.sha;
+      pageDirty = false; pageLoaded = true; pageRange = null; selectedImage = null;
+      $('p-preview').hidden = true;
+      $('p-state').textContent = 'Можно редактировать текст и таблицы. Картинку можно заменить: нажмите на неё, удалите и добавьте новую.';
+    }).catch(function (err) {
+      $('p-state').textContent = 'Не удалось загрузить страницу. Откройте вкладку повторно.';
+      status('err', err.message);
+    }).then(function () { pageBusy(false); });
+  }
+  $('p-page').addEventListener('change', function () {
+    if (pageDirty && !confirm('На странице есть несохранённые изменения. Перейти без сохранения?')) {
+      $('p-page').value = pageSlug; return;
+    }
+    loadPage();
+  });
+  $('p-reload').addEventListener('click', function () {
+    if (pageDirty && !confirm('Загрузить сохранённый текст и отменить несохранённые изменения?')) return;
+    loadPage();
+  });
+  editor.addEventListener('input', markPageDirty);
+  ['keyup', 'mouseup', 'focusout'].forEach(function (event) { editor.addEventListener(event, rememberSelection); });
+  editor.addEventListener('click', function (e) {
+    if (selectedImage) selectedImage.classList.remove('selected');
+    selectedImage = e.target.tagName === 'IMG' ? e.target : null;
+    if (selectedImage) selectedImage.classList.add('selected');
+  });
+  editor.addEventListener('paste', function (e) {
+    e.preventDefault();
+    var html = e.clipboardData.getData('text/html');
+    if (!html) html = esc(e.clipboardData.getData('text/plain')).replace(/\r?\n/g, '<br>');
+    rememberSelection(); insertPageHtml(html);
+  });
+  // Файлы добавляются через форму, чтобы картинки не оставались локальными data: URL.
+  editor.addEventListener('drop', function (e) { e.preventDefault(); status('err', 'Для загрузки используйте «Прикрепить документ или картинку».'); });
+  $('p-toolbar').addEventListener('mousedown', function (e) { if (e.target.closest('button')) e.preventDefault(); });
+  $('p-toolbar').addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn || pageWorking || !pageLoaded) return;
+    if (btn.dataset.command || btn.dataset.block) {
+      restoreSelection();
+      document.execCommand(btn.dataset.command || 'formatBlock', false, btn.dataset.block || null);
+      rememberSelection(); markPageDirty();
+    }
+  });
+  $('p-link').addEventListener('click', function () {
+    if (pageWorking || !pageLoaded) return;
+    var url = prompt('Адрес ссылки (например, https://example.ru или lekcii.html):');
+    if (!url) return;
+    url = url.trim();
+    if (!PageContent.safeUrl(url, false)) { status('err', 'Укажите обычный адрес сайта или файла.'); return; }
+    restoreSelection();
+    var label = window.getSelection().toString() || prompt('Текст ссылки:', url);
+    if (label) insertPageHtml('<a href="' + esc(url) + '">' + esc(label) + '</a>');
+  });
+  $('p-table').addEventListener('click', function () {
+    if (pageWorking || !pageLoaded) return;
+    var rows = Number(prompt('Количество строк (включая заголовок, от 2 до 30):', '5'));
+    if (!rows) return;
+    var cols = Number(prompt('Количество столбцов (от 1 до 10):', '3'));
+    if (!Number.isInteger(rows) || rows < 2 || rows > 30 || !Number.isInteger(cols) || cols < 1 || cols > 10) {
+      status('err', 'Укажите от 2 до 30 строк и от 1 до 10 столбцов.'); return;
+    }
+    var html = '<table><tbody>';
+    for (var r = 0; r < rows; r++) {
+      html += '<tr>';
+      for (var c = 0; c < cols; c++) html += r === 0 ? '<th>Заголовок ' + (c + 1) + '</th>' : '<td><br></td>';
+      html += '</tr>';
+    }
+    insertPageHtml(html + '</tbody></table><p><br></p>');
+  });
+  function selectedRow() {
+    restoreSelection();
+    var node = window.getSelection().anchorNode;
+    var el = node && (node.nodeType === 1 ? node : node.parentElement);
+    var row = el && el.closest('tr');
+    if (!row || !editor.contains(row)) { status('err', 'Сначала нажмите на ячейку нужной таблицы.'); return null; }
+    return row;
+  }
+  $('p-row').addEventListener('click', function () {
+    if (pageWorking || !pageLoaded) return;
+    var row = selectedRow(); if (!row) return;
+    var newRow = document.createElement('tr');
+    Array.from(row.cells).forEach(function (cell) {
+      var td = document.createElement('td'); td.innerHTML = '<br>';
+      if (cell.colSpan > 1) td.colSpan = cell.colSpan;
+      newRow.appendChild(td);
+    });
+    row.after(newRow); markPageDirty();
+  });
+  $('p-delete-row').addEventListener('click', function () {
+    if (pageWorking || !pageLoaded) return;
+    var row = selectedRow(); if (!row) return;
+    var table = row.closest('table'); row.remove();
+    if (!table.querySelector('tr')) table.remove();
+    pageRange = null; markPageDirty();
+  });
+  $('p-remove-image').addEventListener('click', function () {
+    if (pageWorking || !pageLoaded) return;
+    if (!selectedImage || !editor.contains(selectedImage)) { status('err', 'Сначала нажмите на картинку в редакторе.'); return; }
+    var parent = selectedImage.parentElement;
+    selectedImage.remove();
+    if (parent.tagName === 'A' && !parent.textContent.trim()) parent.remove();
+    selectedImage = null; markPageDirty();
+  });
+  $('p-preview-button').addEventListener('click', function () {
+    $('p-preview-content').innerHTML = PageContent.sanitize(editor.innerHTML, document);
+    $('p-preview').hidden = false;
+    $('p-preview').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  });
+  $('p-upload').addEventListener('click', function () {
+    if (pageWorking || !pageLoaded) return;
+    var file = $('p-file').files[0];
+    if (!file) { status('err', 'Выберите документ или картинку.'); return; }
+    var ext = file.name.split('.').pop().toLowerCase();
+    if (!['pdf','doc','docx','xls','xlsx','csv','txt','ppt','pptx','png','jpg','jpeg','webp','gif','zip'].includes(ext)) {
+      status('err', 'Нужен документ, таблица, презентация или картинка PNG/JPG/WebP/GIF.'); return;
+    }
+    if (file.size > MAX_MB * 1048576) { status('err', 'Файл больше 50 МБ.'); return; }
+    var path = 'files/pages/' + pageSlug + '/' + Date.now() + '-' + safeName(file.name);
+    var label = $('p-file-label').value.trim() || file.name;
+    pageBusy(true); status('busy', 'Загружаю файл…');
+    fileToBase64(file).then(function (b64) {
+      return putFile(path, b64, 'Материал: ' + label);
+    }).then(function () {
+      var html = ['png','jpg','jpeg','webp','gif'].includes(ext) ?
+        '<p><a href="' + path + '"><img src="' + path + '" alt="' + esc(label) + '"></a></p>' :
+        '<p><a href="' + path + '">' + esc(label) + '</a></p>';
+      // Файл уже в репозитории; ссылка сохраняется только с содержанием страницы.
+      pageBusy(false); insertPageHtml(html);
+      $('p-file').value = ''; $('p-file-label').value = '';
+      status('ok', 'Файл добавлен в редактор. Теперь нажмите «Сохранить страницу».');
+    }).catch(function (err) { status('err', err.message); })
+      .then(function () { pageBusy(false); });
+  });
+  $('page-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (pageWorking || !pageLoaded) return;
+    var html = PageContent.sanitize(editor.innerHTML, document);
+    if (!stripTags(html).trim() && !/<img\b/.test(html) && !confirm('Страница будет пустой. Сохранить?')) return;
+    pageBusy(true); status('busy', 'Сохраняю страницу…');
+    // SHA относится к загруженной версии: чужие правки не перезаписываем.
+    writeJson(pagePath(), { html: html }, pageSha, 'Обновлена страница: ' + $('p-page').selectedOptions[0].textContent).then(function (r) {
+      pageSha = r.content.sha; editor.innerHTML = html;
+      pageDirty = false; pageRange = null;
+      $('p-state').textContent = 'Изменения сохранены.';
+      status('ok', 'Сохранено. Публикация обычно занимает 1–5 минут. Затем обновите страницу сайта.');
+    }).catch(function (err) {
+      status('err', err.message + ' Ваш текст остался в редакторе. При конфликте скопируйте правки и загрузите страницу заново.');
+    }).then(function () { pageBusy(false); });
+  });
+  window.addEventListener('beforeunload', function (e) {
+    if (pageDirty || pageWorking) { e.preventDefault(); e.returnValue = ''; }
   });
 
   // ---------- старт ----------
