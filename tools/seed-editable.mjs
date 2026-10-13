@@ -7,7 +7,7 @@ import { sanitizePage } from './page-content.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const slugs = ['fgu-gruppa-107', 'fgu-zadaniya', 'fgu-rezultaty', 'fgu-itogi-semestra',
   'fgu-seminary-1', 'fgu-seminary-2', 'fgu-rejtingovaya-sistema', 'fgu-voprosy-k-ekzamenu',
-  'fgu-raboty-studentov', 'kursovye-temy', 'kursovye-metodika', 'kursovye-raspredelenie', 'kursovye-indeks'];
+  'fgu-raboty-studentov', 'kursovye-temy', 'kursovye-metodika', 'kursovye-raspredelenie', 'kursovye-indeks', 'sajty'];
 fs.mkdirSync(path.join(root, 'data/editable'), { recursive: true });
 for (const slug of slugs) {
   const target = path.join(root, 'data/editable', slug + '.json');
